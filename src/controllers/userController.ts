@@ -4,6 +4,11 @@ import User from "../models/user";
 import bcrypt from "bcrypt";
 import randomstring from "randomstring";
 import jwt from "jsonwebtoken";
+const Ghasedak = require("ghasedak");
+
+let ghasedak = new Ghasedak(
+    "15d8b63d1b6e4d904a5a8e5db9b86719b2ae271ba3605e791dd6a1165b7609b8"
+);
 
 const UserController = {
     createSuperUser: async (
@@ -135,14 +140,20 @@ const UserController = {
                 });
             }
 
-            await User.updateOne({
-                activationCode: randomstring.generate({
-                    length: 6,
-                    charset: "numeric",
-                }),
-                updatedAt: Date.now(),
+            const randomCode = randomstring.generate({
+                length: 6,
+                charset: "numeric",
             });
 
+            await ghasedak.send({
+                message: `سیستم مدیریت بازار کد ارسالی: ${randomCode}`,
+                receptor: mobile,
+                linenumber: "300002525",
+            });
+            await User.updateOne({
+                activationCode: randomCode,
+                updatedAt: Date.now(),
+            });
             return res.status(200).json({
                 message: "کد فعالسازی به شماره همراه شما ارسال شد",
             });
@@ -200,7 +211,7 @@ const UserController = {
     ) => {
         const { id } = req.params;
         const user = await User.findOne({ isDeleted: false, _id: id });
-        console.log(user)
+        console.log(user);
         return res.status(200).json({
             firstName: user?.firstName,
             lastName: user?.lastName,
